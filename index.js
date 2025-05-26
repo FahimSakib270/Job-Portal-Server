@@ -1,6 +1,6 @@
 require("dotenv").config();
 const express = require("express");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
 const app = express();
 
@@ -21,12 +21,26 @@ const client = new MongoClient(uri, {
 });
 
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.send("Job Portal server is running");
 });
 
 async function run() {
   try {
     await client.connect();
+    const jobCollections = client.db("Jobs-Collection").collection("jobs");
+    // all jobs
+    app.get("/jobs", async (req, res) => {
+      const cursor = jobCollections.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+    // specific jobs
+    app.get("/jobs/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await jobCollections.findOne(query);
+      res.send(result);
+    });
 
     await client.db("admin").command({ ping: 1 });
     console.log(
@@ -39,5 +53,5 @@ async function run() {
 run().catch(console.dir);
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+  console.log(`Job portal app  listening on port ${port}`);
 });
