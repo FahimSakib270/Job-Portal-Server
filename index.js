@@ -33,7 +33,12 @@ async function run() {
       .collection("application");
     // all jobs
     app.get("/jobs", async (req, res) => {
-      const cursor = jobCollections.find();
+      const email = req.query.email;
+      const query = {};
+      if (email) {
+        query.hr_email = email;
+      }
+      const cursor = jobCollections.find(query);
       const result = await cursor.toArray();
       res.send(result);
     });
@@ -50,6 +55,7 @@ async function run() {
       const result = await jobCollections.insertOne(newJobs);
       res.send(result);
     });
+
     // application related api
     app.get("/applications", async (req, res) => {
       const email = req.query.email;
@@ -74,6 +80,30 @@ async function run() {
       const result = await applicationCollections.insertOne(application);
       res.send(result);
     });
+    app.get("/applications/job/:id", async (req, res) => {
+      const newId = req.params.id;
+      const query = {
+        jobId: newId,
+      };
+      const result = await applicationCollections.find(query).toArray();
+      res.send(result);
+    });
+    app.patch("/applications/:id", async (req, res) => {
+      const id = req.params.id;
+      const updated = req.body;
+      const filter = {
+        _id: new ObjectId(req.params.id),
+      };
+      const updatedDoc = {
+        $set: {
+          status: req.body.status,
+        },
+      };
+
+      const result = await applicationCollections.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
